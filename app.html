@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Code IDE</title>
+
+<!-- Prism Syntax Highlight -->
+<link href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism-tomorrow.css" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/prismjs/prism.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-python.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-cpp.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-java.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-javascript.min.js"></script>
+
+<style>
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #0f172a;
+    color: white;
+}
+
+/* Header */
+.header {
+    padding: 20px 40px;
+    border-bottom: 1px solid #1e293b;
+    background: #0f172a;
+}
+
+.header h1 {
+    margin: 0;
+    font-size: 24px;
+}
+
+/* Layout */
+.container {
+    max-width: 1200px;
+    margin: 30px auto;
+    padding: 0 20px;
+}
+
+/* Input */
+.input-section {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+textarea {
+    flex: 1;
+    padding: 15px;
+    border-radius: 8px;
+    border: none;
+    font-size: 14px;
+    resize: none;
+    height: 80px;
+}
+
+select, button {
+    padding: 12px 20px;
+    border-radius: 8px;
+    border: none;
+    font-size: 14px;
+}
+
+button {
+    background: linear-gradient(135deg, #6366f1, #4f46e5);
+    color: white;
+    cursor: pointer;
+}
+
+button:hover {
+    opacity: 0.9;
+}
+
+/* Code Box */
+.code-container {
+    position: relative;
+    background: #111827;
+    border-radius: 10px;
+    padding: 20px;
+    min-height: 400px;
+    overflow: auto;
+}
+
+/* Copy Button */
+.copy-btn {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: #1e293b;
+    border: none;
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.copy-btn:hover {
+    background: #334155;
+}
+
+/* Loading */
+.loading {
+    text-align: center;
+    padding: 50px;
+    color: #94a3b8;
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+    <h1>🚀 AI Code IDE</h1>
+</div>
+
+<div class="container">
+
+    <!-- INPUT -->
+    <div class="input-section">
+        <textarea id="problem" placeholder="Mô tả bài toán của bạn..."></textarea>
+
+        <select id="language">
+            <option value="python">Python</option>
+            <option value="cpp">C++</option>
+            <option value="java">Java</option>
+            <option value="javascript">JavaScript</option>
+        </select>
+
+        <button onclick="generateCode()">Generate</button>
+    </div>
+
+    <!-- CODE OUTPUT -->
+    <div class="code-container">
+        <button class="copy-btn" onclick="copyCode()">Copy</button>
+        <pre><code id="codeOutput" class="language-python"></code></pre>
+    </div>
+
+</div>
+
+<script>
+
+async function generateCode() {
+
+    const problem = document.getElementById("problem").value;
+    const language = document.getElementById("language").value;
+    const codeOutput = document.getElementById("codeOutput");
+
+    if (!problem.trim()) return;
+
+    codeOutput.innerHTML = "";
+    document.querySelector(".code-container").innerHTML =
+        '<div class="loading">🤖 AI đang suy nghĩ...</div>';
+
+    try {
+
+        const response = await fetch("http://127.0.0.1:8000/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                problem: problem,
+                language: language
+            })
+        });
+
+        const data = await response.json();
+
+        document.querySelector(".code-container").innerHTML = `
+            <button class="copy-btn" onclick="copyCode()">Copy</button>
+            <pre><code id="codeOutput" class="language-${language}"></code></pre>
+        `;
+
+        const newCodeOutput = document.getElementById("codeOutput");
+        newCodeOutput.textContent = data.code || "Không có code.";
+        Prism.highlightElement(newCodeOutput);
+
+    } catch (error) {
+
+        document.querySelector(".code-container").innerHTML =
+            '<div class="loading">❌ Không thể kết nối backend.</div>';
+    }
+}
+
+function copyCode() {
+    const code = document.getElementById("codeOutput").innerText;
+    navigator.clipboard.writeText(code);
+    alert("Đã copy code!");
+}
+
+</script>
+
+</body>
+</html>
